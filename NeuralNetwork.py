@@ -21,7 +21,8 @@ def normalize(inputs):
 
 class NeuralNetwork:
 
-    def __init__(self, layers):
+    def __initiateFromLayers(self, layers: list[int]) -> None:
+        print("LAYnit")
         self.layerSchema = layers
         if len(layers) < 2: return("small number of layers")
         lastSize = layers[0]
@@ -30,21 +31,25 @@ class NeuralNetwork:
             self.transforms += [generateMatrix(lastSize, layerSize)]
             lastSize = layerSize
 
-    def __init__(self, transforms):
+    def __initiateFromTransforms(self, transforms: list[np.array]) -> None:
+        print("TRAnit")
         self.transforms = transforms
         schema = []
-        schema += len(transforms[0])
+        schema += [len(transforms[0])]
         for transform in transforms:
-            schema += len(transform[0])
+            schema += [len(transform[0])]
         self.layerSchema = schema
+
+    def __init__(self, arg):
+        if isinstance(arg[0], int): self.__initiateFromLayers(arg)
+        elif isinstance(arg[0], list): self.__initiateFromTransforms(arg)
 
             
     def evaluate(self, inputs):
         if self.layerSchema[0] != len(inputs): return("input doesnt match neural network")
         inputLayer = normalize(inputs)
         for transform in self.transforms:
-            nextLayer = inputLayer.dot(transform)
-            nextLayer = normalize(inputLayer)
+            nextLayer = normalize(inputLayer.dot(transform))
             inputLayer = nextLayer
         return nextLayer
 
@@ -54,7 +59,9 @@ class NeuralNetwork:
         cross1, cross2 = [], []
         for index in range(len(self.transforms)):
             parent1, parent2 = self.transforms[index], other.transforms[index]
-            from1to2 = np.linalg.inv(parent1).dot(parent2)**(1/3)
-            cross1 += parent1.dot(from1to2)
-            cross2 += parent1.dot(from1to2**2)
+            inverted = np.linalg.pinv(parent1)
+            from1to2 = ((inverted).dot(parent2))
+            step = from1to2**(1/3)
+            cross1 += [parent1.dot(step)]
+            cross2 += [parent1.dot(step**2)]
         return NeuralNetwork(cross1), NeuralNetwork(cross2)
